@@ -3,533 +3,597 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>´Daniel Krba — Portfolio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <title>Daniel Krba — Portfolio</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0d0d0d;
-      --surface: #161616;
-      --border: #2a2a2a;
-      --accent: #c8f542;
-      --text: #f0f0f0;
-      --muted: #666;
-      --font-display: 'Syne', sans-serif;
-      --font-mono: 'DM Mono', monospace;
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #16161f;
+      --border: #1e1e2e;
+      --accent: #7c6ff7;
+      --accent2: #f7786f;
+      --accent3: #6ff7c4;
+      --warn: #f7c56f;
+      --text: #e8e8f0;
+      --muted: #5a5a7a;
+      --font: 'Syne', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
     }
 
     html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-display);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* NOISE OVERLAY */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 100;
-      opacity: 0.35;
-    }
-
-    /* NAV */
+    /* ── NAV ── */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      padding: 1.25rem 2.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 50;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(10,10,15,0.9);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      background: rgba(13,13,13,0.85);
-      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 58px;
     }
-
-    .nav-logo {
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--accent);
+    .nav-logo { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); cursor: pointer; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-link {
+      font-family: var(--mono); font-size: 0.78rem;
+      padding: 6px 14px; border-radius: 8px;
+      color: var(--muted); cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.18s; user-select: none;
     }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: var(--text); background: var(--surface2); border-color: var(--border); }
 
-    .nav-links { display: flex; gap: 2rem; }
-    .nav-links a {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--text); }
+    /* ── PAGES ── */
+    .page { display: none; padding-top: 58px; min-height: 100vh; }
+    .page.active { display: block; }
 
-    /* HERO */
+    /* ══════════════════════════
+       PAGE: HOME / PORTFOLIO
+    ══════════════════════════ */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 8rem 2.5rem 4rem;
-      position: relative;
+      min-height: calc(100vh - 58px);
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 4rem 2.5rem;
     }
-
     .hero-tag {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--accent);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-      opacity: 0;
-      animation: fadeUp 0.6s 0.2s forwards;
+      font-family: var(--mono); font-size: 0.75rem; color: var(--accent);
+      letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem;
     }
-
     .hero h1 {
-      font-size: clamp(3.5rem, 10vw, 8rem);
-      font-weight: 800;
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-      max-width: 900px;
-      opacity: 0;
-      animation: fadeUp 0.6s 0.35s forwards;
+      font-size: clamp(3.5rem, 10vw, 8rem); font-weight: 800;
+      line-height: 0.95; letter-spacing: -0.04em; max-width: 900px;
     }
-
     .hero h1 span { color: var(--accent); }
-
     .hero-sub {
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
-      color: var(--muted);
-      margin-top: 2rem;
-      max-width: 480px;
-      line-height: 1.7;
-      opacity: 0;
-      animation: fadeUp 0.6s 0.5s forwards;
+      font-family: var(--mono); font-size: 0.9rem; color: var(--muted);
+      margin-top: 2rem; max-width: 480px; line-height: 1.8;
     }
-
-    .hero-cta {
-      margin-top: 3rem;
-      display: flex;
-      gap: 1rem;
-      opacity: 0;
-      animation: fadeUp 0.6s 0.65s forwards;
-    }
-
+    .hero-cta { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; }
     .btn-primary {
-      padding: 0.8rem 1.8rem;
-      background: var(--accent);
-      color: #000;
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 0.9rem;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
+      padding: 0.75rem 1.75rem; background: var(--accent); color: #fff;
+      font-family: var(--font); font-weight: 700; font-size: 0.88rem;
+      border: none; cursor: pointer; text-decoration: none; border-radius: 8px;
+      transition: opacity 0.2s, transform 0.15s;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,245,66,0.25); }
-
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
     .btn-secondary {
-      padding: 0.8rem 1.8rem;
-      background: transparent;
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.2s, color 0.2s;
+      padding: 0.75rem 1.75rem; background: transparent; color: var(--text);
+      font-family: var(--mono); font-size: 0.82rem;
+      border: 1px solid var(--border); cursor: pointer;
+      text-decoration: none; border-radius: 8px; transition: border-color 0.2s, color 0.2s;
     }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* SCROLLING MARQUEE */
     .marquee-wrap {
-      overflow: hidden;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 0;
-      background: var(--surface);
+      overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 0.9rem 0; background: var(--surface);
     }
     .marquee {
-      display: flex;
-      gap: 3rem;
-      width: max-content;
-      animation: marquee 20s linear infinite;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      display: flex; gap: 3rem; width: max-content;
+      animation: marquee 22s linear infinite;
+      font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
     }
-    .marquee span { color: var(--accent); }
+    .marquee em { color: var(--accent); font-style: normal; }
 
-    /* SECTIONS */
-    section { padding: 6rem 2.5rem; }
-
+    /* projects section on home */
+    .section { padding: 5rem 2.5rem; }
     .section-label {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 3rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      font-family: var(--mono); font-size: 0.68rem; color: var(--accent);
+      letter-spacing: 0.2em; text-transform: uppercase;
+      margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem;
     }
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    /* PROJECTS */
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
-    }
-
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; }
     .project-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      padding: 2rem;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.2s, transform 0.2s;
-      cursor: default;
+      border: 1px solid var(--border); background: var(--surface);
+      padding: 2rem; border-radius: 12px; position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s; cursor: default;
     }
     .project-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--accent); transform: scaleX(0); transform-origin: left;
+      transition: transform 0.3s; border-radius: 12px 12px 0 0;
     }
-    .project-card:hover { border-color: #444; transform: translateY(-3px); }
+    .project-card:hover { border-color: #333; transform: translateY(-4px); }
     .project-card:hover::before { transform: scaleX(1); }
+    .project-num { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); margin-bottom: 1.25rem; }
+    .project-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+    .project-desc { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
+    .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .tag { font-family: var(--mono); font-size: 0.68rem; padding: 3px 10px; border: 1px solid var(--border); color: var(--muted); border-radius: 4px; }
 
-    .project-num {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-bottom: 1.5rem;
-    }
+    /* skills */
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+    .skill-item { border: 1px solid var(--border); padding: 1.25rem 1.5rem; background: var(--surface); border-radius: 10px; }
+    .skill-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .skill-bar { height: 2px; background: var(--border); position: relative; border-radius: 2px; }
+    .skill-fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); width: 0; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); border-radius: 2px; }
 
-    .project-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
-    }
+    /* about */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .about-text { font-family: var(--mono); font-size: 0.88rem; color: var(--muted); line-height: 1.9; }
+    .about-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .stat { border-top: 1px solid var(--border); padding-top: 1rem; }
+    .stat-num { font-size: 2.5rem; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; line-height: 1; }
+    .stat-label { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; text-transform: uppercase; letter-spacing: 0.1em; }
 
-    .project-desc {
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 1.5rem;
-    }
-
-    .project-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .tag {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      padding: 3px 10px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-
-    /* SKILLS */
-    .skills-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .skill-item {
-      border: 1px solid var(--border);
-      padding: 1.25rem 1.5rem;
-      background: var(--surface);
-    }
-
-    .skill-name {
-      font-size: 0.9rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .skill-bar {
-      height: 2px;
-      background: var(--border);
-      position: relative;
-    }
-
-    .skill-fill {
-      position: absolute;
-      top: 0; left: 0; bottom: 0;
-      background: var(--accent);
-      width: 0;
-      transition: width 1s cubic-bezier(0.4,0,0.2,1);
-    }
-
-    /* ABOUT */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      align-items: start;
-    }
-
-    .about-text {
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      color: var(--muted);
-      line-height: 1.9;
-    }
-
-    .about-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
-    .stat {
-      border-top: 1px solid var(--border);
-      padding-top: 1rem;
-    }
-
-    .stat-num {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: var(--accent);
-      letter-spacing: -0.04em;
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 0.4rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    /* CONTACT */
-    .contact-inner {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      padding: 4rem;
-      text-align: center;
-    }
-
-    .contact-inner h2 {
-      font-size: clamp(2rem, 5vw, 4rem);
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      margin-bottom: 1rem;
-    }
-
+    /* contact */
+    .contact-inner { border: 1px solid var(--border); background: var(--surface); padding: 4rem; text-align: center; border-radius: 16px; }
+    .contact-inner h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 800; letter-spacing: -0.04em; margin-bottom: 1rem; }
     .contact-inner h2 span { color: var(--accent); }
+    .contact-inner p { font-family: var(--mono); font-size: 0.88rem; color: var(--muted); margin-bottom: 2.5rem; }
 
-    .contact-inner p {
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 2.5rem;
-    }
+    /* ══════════════════════════
+       PAGE: DASHBOARD
+    ══════════════════════════ */
+    .dash-wrap { padding: 2rem 2.5rem; }
+    .dash-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .dash-topbar h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    .dash-sub { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .topbar-right { display: flex; gap: 0.75rem; align-items: center; }
+    .date-badge { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 0.9rem; border-radius: 8px; }
+    .refresh-btn { background: var(--accent); color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.8rem; font-family: var(--font); cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+    .refresh-btn:hover { opacity: 0.85; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; position: relative; overflow: hidden; }
+    .kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 12px 12px 0 0; }
+    .kpi-card.c1::after { background: var(--accent); }
+    .kpi-card.c2::after { background: var(--accent3); }
+    .kpi-card.c3::after { background: var(--warn); }
+    .kpi-card.c4::after { background: var(--accent2); }
+    .kpi-label { font-size: 0.72rem; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+    .kpi-value { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.5rem; }
+    .kpi-change { font-size: 0.72rem; font-family: var(--mono); }
+    .up { color: var(--accent3); }
+    .down { color: var(--accent2); }
+
+    .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+    .card-title { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+    .card-sub { font-size: 0.7rem; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-sm { position: relative; height: 180px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; text-align: left; padding: 0 0.75rem 0.75rem; border-bottom: 1px solid var(--border); }
+    tbody tr { transition: background 0.12s; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 0.75rem; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    .status { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .s-green { background: rgba(111,247,196,0.1); color: var(--accent3); }
+    .s-green .status-dot { background: var(--accent3); }
+    .s-yellow { background: rgba(247,197,111,0.1); color: var(--warn); }
+    .s-yellow .status-dot { background: var(--warn); }
+    .s-red { background: rgba(247,120,111,0.1); color: var(--accent2); }
+    .s-red .status-dot { background: var(--accent2); }
+
+    /* ══════════════════════════
+       PAGE: PROJECTS
+    ══════════════════════════ */
+    .projects-page { padding: 3rem 2.5rem; }
+    .page-hero { margin-bottom: 3rem; }
+    .page-hero h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800; letter-spacing: -0.04em; }
+    .page-hero h1 span { color: var(--accent); }
+    .page-hero p { font-family: var(--mono); font-size: 0.88rem; color: var(--muted); margin-top: 1rem; max-width: 500px; line-height: 1.8; }
+
+    .project-full { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 2.5rem; margin-bottom: 1.25rem; display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: start; transition: border-color 0.2s; }
+    .project-full:hover { border-color: #333; }
+    .proj-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); margin-bottom: 0.6rem; }
+    .proj-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.75rem; }
+    .proj-desc { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); line-height: 1.8; margin-bottom: 1.25rem; max-width: 600px; }
+    .proj-link { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); padding-bottom: 1px; cursor: pointer; }
+    .proj-num-big { font-size: 5rem; font-weight: 800; color: var(--border); letter-spacing: -0.06em; line-height: 1; user-select: none; }
+
+    /* ══════════════════════════
+       PAGE: ABOUT / CONTACT
+    ══════════════════════════ */
+    .about-page { padding: 3rem 2.5rem; }
 
     /* FOOTER */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 2.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
 
     /* ANIMATIONS */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .page.active { animation: fadeIn 0.3s ease forwards; }
 
     /* RESPONSIVE */
-    @media (max-width: 700px) {
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid { grid-template-columns: 1fr; }
+      .chart-grid-2 { grid-template-columns: 1fr; }
       .about-grid { grid-template-columns: 1fr; }
+      .project-full { grid-template-columns: 1fr; }
+      .proj-num-big { display: none; }
       .contact-inner { padding: 2rem; }
-      nav { padding: 1rem 1.25rem; }
-      .nav-links { gap: 1.2rem; }
-      section { padding: 4rem 1.25rem; }
-      .hero { padding: 7rem 1.25rem 3rem; }
+    }
+    @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .nav-link { padding: 5px 9px; font-size: 0.72rem; }
+      .hero, .section, .dash-wrap, .projects-page, .about-page { padding-left: 1.25rem; padding-right: 1.25rem; }
     }
   </style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-logo">DK</div>
-    <div class="nav-links">
-      <a href="#projects">Projects</a>
-      <a href="#skills">Skills</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-    </div>
-  </nav>
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">DK</div>
+  <div class="nav-links">
+    <div class="nav-link active" data-page="home" onclick="showPage('home')">Home</div>
+    <div class="nav-link" data-page="projects" onclick="showPage('projects')">Projects</div>
+    <div class="nav-link" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</div>
+    <div class="nav-link" data-page="about" onclick="showPage('about')">About</div>
+  </div>
+</nav>
 
-  <section class="hero">
+<!-- ══════════════════════════════
+     PAGE: HOME
+══════════════════════════════ -->
+<div id="page-home" class="page active">
+
+  <div class="hero">
     <div class="hero-tag">// Available for opportunities</div>
-    <h1>Daniel<br><span>Krba</span><br>2025.</h1>
+    <h1>Daniel<br><span>Krba</span><br></h1>
     <p class="hero-sub">Junior web developer learning HTML, CSS & JavaScript. Building projects, solving problems, growing every day.</p>
     <div class="hero-cta">
-      <a href="#projects" class="btn-primary">View Projects</a>
-      <a href="#contact" class="btn-secondary">Get in touch</a>
-    </div>
-  </section>
-
-  <div class="marquee-wrap">
-    <div class="marquee">
-      <span>HTML</span> · CSS · <span>JavaScript</span> · Responsive Design · <span>Git</span> · GitHub · <span>Web Development</span> · Front-End · <span>HTML</span> · CSS · <span>JavaScript</span> · Responsive Design · <span>Git</span> · GitHub · <span>Web Development</span> · Front-End ·
+      <button class="btn-primary" onclick="showPage('projects')">View Projects</button>
+      <button class="btn-secondary" onclick="showPage('about')">About me</button>
     </div>
   </div>
 
-  <section id="projects">
-    <div class="section-label">Projects</div>
-    <div class="projects-grid">
+  <div class="marquee-wrap">
+    <div class="marquee">
+      <em>HTML</em> · CSS · <em>JavaScript</em> · Responsive Design · <em>Git</em> · GitHub · <em>Web Dev</em> · Charts · <em>HTML</em> · CSS · <em>JavaScript</em> · Responsive Design · <em>Git</em> · GitHub · <em>Web Dev</em> · Charts ·
+    </div>
+  </div>
 
+  <div class="section">
+    <div class="section-label">Featured Projects</div>
+    <div class="projects-grid">
       <div class="project-card">
         <div class="project-num">01</div>
         <div class="project-title">Portfolio Website</div>
-        <div class="project-desc">Personal portfolio page built with HTML and CSS. Responsive layout, dark theme, and clean design.</div>
-        <div class="project-tags">
-          <span class="tag">HTML</span>
-          <span class="tag">CSS</span>
-          <span class="tag">Responsive</span>
-        </div>
+        <div class="project-desc">Personal site with multi-page navigation, dark theme and responsive layout.</div>
+        <div class="project-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div>
       </div>
-
       <div class="project-card">
         <div class="project-num">02</div>
-        <div class="project-title">To-Do App</div>
-        <div class="project-desc">Task management web app with add, complete and delete functionality. Data persists via localStorage.</div>
-        <div class="project-tags">
-          <span class="tag">HTML</span>
-          <span class="tag">CSS</span>
-          <span class="tag">JavaScript</span>
-        </div>
+        <div class="project-title">Analytics Dashboard</div>
+        <div class="project-desc">Interactive data dashboard with live charts, KPI cards and transaction table.</div>
+        <div class="project-tags"><span class="tag">JavaScript</span><span class="tag">Chart.js</span><span class="tag">CSS Grid</span></div>
       </div>
-
       <div class="project-card">
         <div class="project-num">03</div>
-        <div class="project-title">Weather Dashboard</div>
-        <div class="project-desc">Live weather app powered by OpenWeatherMap API. Search any city and see current conditions.</div>
-        <div class="project-tags">
-          <span class="tag">JavaScript</span>
-          <span class="tag">API</span>
-          <span class="tag">Fetch</span>
-        </div>
+        <div class="project-title">To-Do App</div>
+        <div class="project-desc">Task manager with add, complete and delete. Data persists via localStorage.</div>
+        <div class="project-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div>
       </div>
-
     </div>
-  </section>
+  </div>
 
-  <section id="skills">
+  <div class="section" style="padding-top:0">
     <div class="section-label">Skills</div>
     <div class="skills-grid">
-      <div class="skill-item">
-        <div class="skill-name">HTML</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
-      </div>
-      <div class="skill-item">
-        <div class="skill-name">CSS</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="75"></div></div>
-      </div>
-      <div class="skill-item">
-        <div class="skill-name">JavaScript</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="55"></div></div>
-      </div>
-      <div class="skill-item">
-        <div class="skill-name">Git & GitHub</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="60"></div></div>
-      </div>
-      <div class="skill-item">
-        <div class="skill-name">Responsive Design</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="70"></div></div>
-      </div>
-      <div class="skill-item">
-        <div class="skill-name">VS Code</div>
-        <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
-      </div>
+      <div class="skill-item"><div class="skill-name">HTML</div><div class="skill-bar"><div class="skill-fill" data-width="85"></div></div></div>
+      <div class="skill-item"><div class="skill-name">CSS</div><div class="skill-bar"><div class="skill-fill" data-width="78"></div></div></div>
+      <div class="skill-item"><div class="skill-name">JavaScript</div><div class="skill-bar"><div class="skill-fill" data-width="58"></div></div></div>
+      <div class="skill-item"><div class="skill-name">Git & GitHub</div><div class="skill-bar"><div class="skill-fill" data-width="65"></div></div></div>
+      <div class="skill-item"><div class="skill-name">Responsive Design</div><div class="skill-bar"><div class="skill-fill" data-width="72"></div></div></div>
+      <div class="skill-item"><div class="skill-name">Chart.js</div><div class="skill-bar"><div class="skill-fill" data-width="55"></div></div></div>
     </div>
-  </section>
-
-  <section id="about">
-    <div class="section-label">About</div>
-    <div class="about-grid">
-      <div class="about-text">
-        Hi, I'm a student interested in web development. I started learning HTML and CSS not long ago and have been building small projects to practise. I enjoy turning ideas into working pages and I'm always looking to improve.<br><br>
-        Currently focused on front-end development — making things look good and work well in the browser. Open to collaboration and always happy to connect.
-      </div>
-      <div class="about-stats">
-        <div class="stat"><div class="stat-num">3</div><div class="stat-label">Projects</div></div>
-        <div class="stat"><div class="stat-num">3</div><div class="stat-label">Technologies</div></div>
-        <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Curiosity</div></div>
-        <div class="stat"><div class="stat-num">CZ</div><div class="stat-label">Based in</div></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="contact">
-    <div class="contact-inner">
-      <h2>Let's<br><span>Connect.</span></h2>
-      <p>Open to feedback, collaboration or just a chat about code.</p>
-      <a href="mailto:your@email.com" class="btn-primary">Say Hello →</a>
-    </div>
-  </section>
+  </div>
 
   <footer>
     <span>© 2025 Daniel Krba</span>
-    <span>Built with HTML & CSS</span>
+    <span>Built with HTML, CSS & JS</span>
   </footer>
+</div>
 
-  <script>
-    // Animate skill bars when in view
-    const fills = document.querySelectorAll('.skill-fill');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.style.width = e.target.dataset.width + '%';
-        }
+<!-- ══════════════════════════════
+     PAGE: PROJECTS
+══════════════════════════════ -->
+<div id="page-projects" class="page">
+  <div class="projects-page">
+    <div class="page-hero">
+      <h1>My <span>Projects</span></h1>
+      <p>A collection of things I've built while learning front-end development.</p>
+    </div>
+
+    <div class="project-full">
+      <div>
+        <div class="proj-meta">01 · HTML / CSS / JavaScript</div>
+        <div class="proj-title">Portfolio Website</div>
+        <div class="proj-desc">Multi-page personal portfolio with smooth page transitions, responsive layout, skill bars, and a dark theme. Built entirely with vanilla HTML, CSS and JavaScript — no frameworks.</div>
+        <div class="project-tags" style="margin-bottom:1.25rem"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span><span class="tag">Responsive</span></div>
+        <a href="https://github.com/dankrba/portfolio/tree/main" class="proj-link">View on GitHub -></a>
+      </div>
+      <div class="proj-num-big">01</div>
+    </div>
+
+    <div class="project-full">
+      <div>
+        <div class="proj-meta">02 · JavaScript / Chart.js</div>
+        <div class="proj-title">Analytics Dashboard</div>
+        <div class="proj-desc">Interactive analytics dashboard featuring live KPI cards, a revenue line chart, traffic donut chart, weekly bar chart, and performance radar. Data refreshes dynamically on click.</div>
+        <div class="project-tags" style="margin-bottom:1.25rem"><span class="tag">JavaScript</span><span class="tag">Chart.js</span><span class="tag">CSS Grid</span><span class="tag">Data Viz</span></div>
+        <a href="https://github.com/dankrba/portfolio/blob/main/DASHBOARD" class="proj-link">View on GitHub -></a>
+      </div>
+      <div class="proj-num-big">02</div>
+    </div>
+
+    <div class="project-full">
+      <div>
+        <div class="proj-meta">03 · HTML / CSS / JavaScript</div>
+        <div class="proj-title">To-Do Application</div>
+        <div class="proj-desc">Clean task manager with the ability to add, complete, and delete tasks. Uses localStorage to persist data between sessions so nothing gets lost on page refresh.</div>
+        <div class="project-tags" style="margin-bottom:1.25rem"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span><span class="tag">localStorage</span></div>
+        <a href="https://github.com/dankrba/portfolio/blob/main/TO-DO" class="proj-link">View on GitHub -></a>
+      </div>
+      <div class="proj-num-big">03</div>
+    </div>
+  </div>
+  <footer>
+    <span>© 2025 Daniel Krba</span>
+    <span>Built with HTML, CSS & JS</span>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: DASHBOARD
+══════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dash-wrap">
+    <div class="dash-topbar">
+      <div>
+        <h1>Analytics Overview</h1>
+        <div class="dash-sub">// last updated just now</div>
+      </div>
+      <div class="topbar-right">
+        <div class="date-badge" id="date-badge"></div>
+        <button class="refresh-btn" onclick="refreshKPIs()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card c1">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value" id="kpi-rev">$84,291</div>
+        <div class="kpi-change up">▲ 12.4% vs last month</div>
+      </div>
+      <div class="kpi-card c2">
+        <div class="kpi-label">Active Users</div>
+        <div class="kpi-value" id="kpi-users">3,847</div>
+        <div class="kpi-change up">▲ 8.1% vs last month</div>
+      </div>
+      <div class="kpi-card c3">
+        <div class="kpi-label">Conversion Rate</div>
+        <div class="kpi-value" id="kpi-conv">4.7%</div>
+        <div class="kpi-change down">▼ 0.3% vs last month</div>
+      </div>
+      <div class="kpi-card c4">
+        <div class="kpi-label">Avg. Session</div>
+        <div class="kpi-value" id="kpi-sess">3m 22s</div>
+        <div class="kpi-change up">▲ 5.2% vs last month</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Revenue Over Time</div><div class="card-sub">Monthly · 2024</div></div>
+        </div>
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Traffic Sources</div><div class="card-sub">By channel</div></div>
+        </div>
+        <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Weekly Active Users</div><div class="card-sub">Last 7 days</div></div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Performance Score</div><div class="card-sub">Key metrics</div></div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="radarChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Recent Transactions</div><div class="card-sub">Last 6 entries</div></div>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0041</td><td>Alice Morgan</td><td>Pro Plan</td><td style="font-family:var(--mono)">$99.00</td><td style="color:var(--muted);font-size:.78rem">Jan 18, 2025</td><td><span class="status s-green"><span class="status-dot"></span>Completed</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0040</td><td>Ben Novak</td><td>Starter Plan</td><td style="font-family:var(--mono)">$29.00</td><td style="color:var(--muted);font-size:.78rem">Jan 17, 2025</td><td><span class="status s-yellow"><span class="status-dot"></span>Pending</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0039</td><td>Clara Horak</td><td>Enterprise</td><td style="font-family:var(--mono)">$499.00</td><td style="color:var(--muted);font-size:.78rem">Jan 16, 2025</td><td><span class="status s-green"><span class="status-dot"></span>Completed</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0038</td><td>David Sram</td><td>Pro Plan</td><td style="font-family:var(--mono)">$99.00</td><td style="color:var(--muted);font-size:.78rem">Jan 15, 2025</td><td><span class="status s-red"><span class="status-dot"></span>Failed</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0037</td><td>Eva Kratka</td><td>Starter Plan</td><td style="font-family:var(--mono)">$29.00</td><td style="color:var(--muted);font-size:.78rem">Jan 14, 2025</td><td><span class="status s-green"><span class="status-dot"></span>Completed</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-size:.73rem;color:var(--muted)">#TXN-0036</td><td>Filip Marek</td><td>Pro Plan</td><td style="font-family:var(--mono)">$99.00</td><td style="color:var(--muted);font-size:.78rem">Jan 13, 2025</td><td><span class="status s-green"><span class="status-dot"></span>Completed</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <footer>
+    <span>© 2025 Daniel Krba</span>
+    <span>Built with HTML, CSS & JS</span>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: ABOUT
+══════════════════════════════ -->
+<div id="page-about" class="page">
+  <div class="about-page">
+    <div class="page-hero">
+      <h1>About <span>Me</span></h1>
+      <p>A bit about who I am and what I'm working on.</p>
+    </div>
+
+    <div class="section" style="padding:0 0 4rem">
+      <div class="about-grid">
+        <div class="about-text">
+          Hi, I'm a student interested in web development. I started learning HTML and CSS not long ago and have been building small projects to practise. I enjoy turning ideas into working pages and I'm always looking to improve.<br><br>
+          Currently focused on front-end development — making things look good and work well in the browser. Open to collaboration and always happy to connect.<br><br>
+          When I'm not coding, you'll find me exploring new tools, reading about design, or working on personal projects.
+        </div>
+        <div class="about-stats">
+          <div class="stat"><div class="stat-num">3</div><div class="stat-label">Projects</div></div>
+          <div class="stat"><div class="stat-num">3</div><div class="stat-label">Technologies</div></div>
+          <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Curiosity</div></div>
+          <div class="stat"><div class="stat-num">CZ</div><div class="stat-label">Based in</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-inner">
+      <h2>Let's<br><span>Connect.</span></h2>
+      <p>Open to feedback, collaboration or just a chat about code.</p>
+      <a href="mailto:dan.krba@gmail.com" class="btn-primary">Say Hello →</a>
+    </div>
+  </div>
+  <footer>
+    <span>© 2025 Daniel Krba</span>
+    <span>Built with HTML, CSS & JS</span>
+  </footer>
+</div>
+
+<script>
+  // ── PAGE SWITCHING ──
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(function(p) {
+      p.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-link').forEach(function(l) {
+      l.classList.toggle('active', l.dataset.page === name);
+    });
+    document.getElementById('page-' + name).classList.add('active');
+    window.scrollTo(0, 0);
+
+    if (name === 'dashboard' && !window.chartsBuilt) buildCharts();
+    if (name === 'home') animateSkills();
+  }
+
+  // ── SKILL BARS ──
+  function animateSkills() {
+    setTimeout(function() {
+      document.querySelectorAll('.skill-fill').forEach(function(el) {
+        el.style.width = el.dataset.width + '%';
       });
-    }, { threshold: 0.3 });
-    fills.forEach(f => observer.observe(f));
-  </script>
+    }, 200);
+  }
+  animateSkills();
 
+  // ── DATE BADGE ──
+  var now = new Date();
+  var el = document.getElementById('date-badge');
+  if (el) el.textContent = now.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+
+  // ── CHARTS ──
+  window.chartsBuilt = false;
+
+  function buildCharts() {
+    window.chartsBuilt = true;
+
+    Chart.defaults.color = '#5a5a7a';
+    Chart.defaults.borderColor = '#1e1e2e';
+    Chart.defaults.font.family = "'JetBrains Mono', monospace";
+    Chart.defaults.font.size = 11;
+
+    var ACCENT  = '#7c6ff7';
+    var ACCENT3 = '#6ff7c4';
+    var WARN    = '#f7c56f';
+    var ACCENT2 = '#f7786f';
+    var MUTED   = '#2a2a3e';
+
+    // Revenue
+    var rCtx = document.getElementById('revenueChart').getContext('2d');
+    var grad = rCtx.createLinearGradient(0, 0, 0, 220);
+    grad.addColorStop(0, 'rgba(124,111,247,0.28)');
+    grad.addColorStop(1, 'rgba(124,111,247,0)');
+    new Chart(rCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [{ label:'Revenue', data:[42000,38000,55000,47000,61000,58000,72000,68000,75000,71000,83000,84291], borderColor:ACCENT, backgroundColor:grad, borderWidth:2, pointBackgroundColor:ACCENT, pointRadius:3, pointHoverRadius:5, tension:0.4, fill:true }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'#1e1e2e' } }, y:{ grid:{ color:'#1e1e2e' }, ticks:{ callback: function(v){ return '$'+(v/1000).toFixed(0)+'k'; } } } } }
+    });
+
+    // Donut
+    new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: { labels:['Organic','Direct','Social','Referral','Email'], datasets:[{ data:[38,25,18,12,7], backgroundColor:[ACCENT,ACCENT3,WARN,ACCENT2,'#a06ff7'], borderWidth:0, hoverOffset:6 }] },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{ position:'right', labels:{ boxWidth:10, padding:14 } } } }
+    });
+
+    // Bar
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: { labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets:[{ label:'Users', data:[420,580,510,670,720,390,310], backgroundColor:[ACCENT,ACCENT,ACCENT,ACCENT,ACCENT,MUTED,MUTED], borderRadius:5, borderSkipped:false }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'#1e1e2e' } } } }
+    });
+
+    // Radar
+    new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: { labels:['Speed','SEO','UX','Security','Uptime','Perf'], datasets:[{ label:'Score', data:[88,92,79,95,99,84], borderColor:ACCENT3, backgroundColor:'rgba(111,247,196,0.1)', borderWidth:2, pointBackgroundColor:ACCENT3, pointRadius:3 }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ r:{ grid:{ color:'#1e1e2e' }, ticks:{ display:false }, suggestedMin:60, suggestedMax:100 } } }
+    });
+  }
+
+  // ── REFRESH KPIs ──
+  function refreshKPIs() {
+    function rand(base, range) { return base + (Math.random() - 0.5) * range; }
+    document.getElementById('kpi-rev').textContent   = '$' + Math.round(rand(84291,5000)).toLocaleString();
+    document.getElementById('kpi-users').textContent = Math.round(rand(3847,300)).toLocaleString();
+    document.getElementById('kpi-conv').textContent  = rand(4.7,0.4).toFixed(1) + '%';
+    var m = Math.round(rand(3,1)), s = Math.abs(Math.round(rand(22,20)));
+    document.getElementById('kpi-sess').textContent  = m + 'm ' + s + 's';
+  }
+</script>
 </body>
 </html>
