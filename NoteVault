@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoteVault — Notes & Passwords</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #16161f;
+      --border: #1e1e2e;
+      --accent: #7c6ff7;
+      --accent2: #f7786f;
+      --accent3: #6ff7c4;
+      --warn: #f7c56f;
+      --text: #e8e8f0;
+      --muted: #5a5a7a;
+      --font: 'Syne', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(10,10,15,0.92); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 58px;
+    }
+    .nav-logo { font-size: 1rem; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.5rem; }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .nav-back { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .nav-back:hover { color: var(--text); }
+
+    /* LAYOUT */
+    .app { display: flex; flex: 1; height: calc(100vh - 58px); overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px; flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-top { padding: 1.25rem; border-bottom: 1px solid var(--border); }
+
+    .tab-row { display: flex; gap: 4px; margin-bottom: 1rem; }
+    .tab-btn {
+      flex: 1; padding: 6px 0; border-radius: 8px;
+      font-family: var(--mono); font-size: 0.72rem;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .search-input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.6rem 0.9rem;
+      font-family: var(--mono); font-size: 0.8rem; color: var(--text);
+      outline: none; transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .item-list { flex: 1; overflow-y: auto; padding: 0.75rem; }
+    .item-list::-webkit-scrollbar { width: 4px; }
+    .item-list::-webkit-scrollbar-track { background: transparent; }
+    .item-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .list-item {
+      padding: 0.9rem 1rem; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; margin-bottom: 4px;
+      transition: all 0.15s;
+    }
+    .list-item:hover { background: var(--surface2); border-color: var(--border); }
+    .list-item.active { background: var(--surface2); border-color: var(--accent); }
+    .list-item-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 3px; }
+    .list-item-icon { font-size: 0.9rem; }
+    .list-item-title { font-size: 0.88rem; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .list-item-date { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+    .list-item-preview { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 1.4rem; }
+
+    .add-btn-full {
+      margin: 0.75rem; padding: 0.75rem;
+      background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      font-family: var(--font); font-weight: 700; font-size: 0.85rem;
+      cursor: pointer; transition: opacity 0.2s; width: calc(100% - 1.5rem);
+    }
+    .add-btn-full:hover { opacity: 0.85; }
+
+    /* MAIN PANEL */
+    .panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .panel-empty {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 0.85rem; color: var(--muted); gap: 0.75rem;
+    }
+    .panel-empty-icon { font-size: 3rem; opacity: 0.2; }
+
+    .panel-content { flex: 1; overflow-y: auto; padding: 2rem; display: none; flex-direction: column; }
+    .panel-content.visible { display: flex; }
+
+    .panel-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; }
+    .panel-title-input {
+      font-family: var(--font); font-size: 1.8rem; font-weight: 800;
+      letter-spacing: -0.03em; color: var(--text);
+      background: transparent; border: none; outline: none;
+      flex: 1; border-bottom: 1px solid transparent;
+      transition: border-color 0.2s; padding-bottom: 4px;
+    }
+    .panel-title-input:focus { border-bottom-color: var(--accent); }
+
+    .panel-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--muted); cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { color: var(--text); border-color: #333; }
+    .icon-btn.danger:hover { color: var(--accent2); border-color: rgba(247,120,111,0.4); background: rgba(247,120,111,0.08); }
+
+    /* NOTE EDITOR */
+    .note-body {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--mono); font-size: 0.88rem; color: var(--text);
+      line-height: 1.9; resize: none; min-height: 300px;
+    }
+
+    /* PASSWORD FIELDS */
+    .pw-fields { display: flex; flex-direction: column; gap: 1rem; }
+    .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field-label { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .field-input {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.75rem 1rem;
+      font-family: var(--mono); font-size: 0.85rem; color: var(--text);
+      outline: none; transition: border-color 0.2s; width: 100%;
+    }
+    .field-input:focus { border-color: var(--accent); }
+
+    .pw-row { display: flex; gap: 0.5rem; }
+    .pw-row .field-input { flex: 1; }
+    .toggle-pw {
+      padding: 0 1rem; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); cursor: pointer; font-size: 0.9rem;
+      transition: all 0.15s; font-family: var(--mono);
+    }
+    .toggle-pw:hover { color: var(--text); border-color: #333; }
+
+    .gen-pw-btn {
+      padding: 0.6rem 1rem; background: transparent; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); cursor: pointer;
+      font-family: var(--mono); font-size: 0.75rem; transition: all 0.15s;
+    }
+    .gen-pw-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    .strength-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 4px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; width: 0; }
+
+    .copy-btn {
+      padding: 0.5rem 0.9rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--muted); cursor: pointer;
+      font-family: var(--mono); font-size: 0.72rem; transition: all 0.15s;
+    }
+    .copy-btn:hover { color: var(--accent3); border-color: var(--accent3); }
+    .copy-btn.copied { color: var(--accent3); border-color: var(--accent3); }
+
+    .save-bar {
+      padding: 1rem 2rem; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      background: var(--surface);
+    }
+    .save-btn {
+      padding: 0.65rem 1.5rem; background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; font-family: var(--font);
+      font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: opacity 0.2s;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .cancel-btn {
+      padding: 0.65rem 1.25rem; background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-family: var(--mono); font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
+    }
+    .cancel-btn:hover { color: var(--text); border-color: #333; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.75rem 1.5rem; font-family: var(--mono); font-size: 0.8rem; color: var(--text);
+      opacity: 0; transition: all 0.25s; z-index: 999; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* TYPE BADGE */
+    .type-badge {
+      font-family: var(--mono); font-size: 0.68rem; padding: 2px 8px;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .badge-note { background: rgba(124,111,247,0.12); color: var(--accent); }
+    .badge-pw   { background: rgba(111,247,196,0.12); color: var(--accent3); }
+
+    footer { border-top: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+
+    @media (max-width: 700px) {
+      .sidebar { width: 100%; position: fixed; bottom: 0; top: 58px; z-index: 50; transform: translateX(-100%); transition: transform 0.25s; }
+      .sidebar.open { transform: translateX(0); }
+      .panel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><div class="logo-dot"></div> NoteVault</div>
+  <a class="nav-back" href="index.html">← Back to Portfolio</a>
+</nav>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-all"  onclick="setTab('all')">All</button>
+        <button class="tab-btn" id="tab-notes" onclick="setTab('notes')">📝 Notes</button>
+        <button class="tab-btn" id="tab-pw"    onclick="setTab('pw')">🔑 Passwords</button>
+      </div>
+      <input class="search-input" id="search" placeholder="Search..." oninput="renderList()" />
+    </div>
+
+    <div class="item-list" id="item-list"></div>
+
+    <button class="add-btn-full" onclick="showNewMenu()">+ New Entry</button>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <div class="panel" id="panel">
+    <div class="panel-empty" id="panel-empty">
+      <div class="panel-empty-icon">🔒</div>
+      Select an entry or create a new one.
+    </div>
+
+    <!-- NOTE EDITOR -->
+    <div class="panel-content" id="panel-note">
+      <div class="panel-header">
+        <input class="panel-title-input" id="note-title" placeholder="Note title..." />
+        <div class="panel-actions">
+          <button class="icon-btn danger" onclick="deleteEntry()" title="Delete">✕</button>
+        </div>
+      </div>
+      <textarea class="note-body" id="note-body" placeholder="Write your note here..."></textarea>
+    </div>
+
+    <!-- PASSWORD EDITOR -->
+    <div class="panel-content" id="panel-pw">
+      <div class="panel-header">
+        <input class="panel-title-input" id="pw-title" placeholder="e.g. Gmail, GitHub..." />
+        <div class="panel-actions">
+          <button class="icon-btn danger" onclick="deleteEntry()" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="pw-fields">
+        <div class="field-group">
+          <div class="field-label">Website / URL</div>
+          <input class="field-input" id="pw-url" type="text" placeholder="https://example.com" />
+        </div>
+        <div class="field-group">
+          <div class="field-label">Username / Email</div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input class="field-input" id="pw-user" type="text" placeholder="your@email.com" />
+            <button class="copy-btn" onclick="copyField('pw-user')">Copy</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Password</div>
+          <div class="pw-row">
+            <input class="field-input" id="pw-pass" type="password" placeholder="••••••••" oninput="updateStrength()" />
+            <button class="toggle-pw" id="toggle-pw" onclick="togglePw()">👁</button>
+            <button class="copy-btn" onclick="copyField('pw-pass')">Copy</button>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem">
+            <span style="font-family:var(--mono);font-size:.68rem;color:var(--muted)" id="strength-label">—</span>
+            <button class="gen-pw-btn" onclick="generatePassword()">⚡ Generate</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Notes</div>
+          <textarea class="field-input" id="pw-notes" rows="3" placeholder="Optional notes..." style="resize:vertical;font-family:var(--mono);font-size:.82rem;line-height:1.7"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="save-bar" id="save-bar" style="display:none">
+      <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+      <button class="save-btn" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──
+  var DATA_KEY = 'notvault-data';
+  var entries = JSON.parse(localStorage.getItem(DATA_KEY) || 'null');
+  if (!entries) {
+    entries = [
+      { id: 1, type: 'note', title: 'Welcome to NoteVault', body: 'This is a demo note.\n\nYou can create notes and save passwords securely in your browser.\n\nAll data is stored in localStorage — nothing leaves your device.', date: today() },
+      { id: 2, type: 'pw', title: 'GitHub', url: 'https://github.com', user: 'your@email.com', pass: 'Sup3rS3cur3!', notes: 'Main developer account', date: today() },
+      { id: 3, type: 'note', title: 'Project Ideas', body: '- Weather dashboard\n- Expense tracker\n- Portfolio v2\n- REST API practice', date: today() },
+      { id: 4, type: 'pw', title: 'Gmail', url: 'https://mail.google.com', user: 'your@gmail.com', pass: 'P@ssw0rd123', notes: '', date: today() },
+    ];
+    save();
+  }
+
+  var currentId   = null;
+  var currentType = null;
+  var tabFilter   = 'all';
+  var pwVisible   = false;
+
+  function today() {
+    return new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  }
+  function save() { localStorage.setItem(DATA_KEY, JSON.stringify(entries)); }
+  function nextId() { return entries.length ? Math.max.apply(null, entries.map(function(e){ return e.id; })) + 1 : 1; }
+
+  // ── TABS ──
+  function setTab(t) {
+    tabFilter = t;
+    ['all','notes','pw'].forEach(function(x) {
+      document.getElementById('tab-' + x).classList.toggle('active', x === t);
+    });
+    renderList();
+  }
+
+  // ── LIST ──
+  function renderList() {
+    var q = document.getElementById('search').value.toLowerCase();
+    var filtered = entries.filter(function(e) {
+      if (tabFilter === 'notes' && e.type !== 'note') return false;
+      if (tabFilter === 'pw'    && e.type !== 'pw')   return false;
+      if (q && !e.title.toLowerCase().includes(q) && !(e.type === 'note' ? e.body : e.user + e.url).toLowerCase().includes(q)) return false;
+      return true;
+    }).sort(function(a,b){ return b.id - a.id; });
+
+    var list = document.getElementById('item-list');
+    if (!filtered.length) {
+      list.innerHTML = '<div style="text-align:center;padding:2rem;font-family:var(--mono);font-size:.78rem;color:var(--muted)">Nothing found.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(function(e) {
+      var icon    = e.type === 'note' ? '📝' : '🔑';
+      var preview = e.type === 'note' ? (e.body || '').replace(/\n/g,' ').slice(0,40) : (e.url || e.user || '');
+      var badge   = e.type === 'note' ? '<span class="type-badge badge-note">note</span>' : '<span class="type-badge badge-pw">password</span>';
+      return '<div class="list-item' + (e.id === currentId ? ' active' : '') + '" onclick="openEntry(' + e.id + ')">' +
+        '<div class="list-item-top"><span class="list-item-icon">' + icon + '</span><span class="list-item-title">' + esc(e.title) + '</span>' + badge + '</div>' +
+        '<div class="list-item-preview">' + esc(preview) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── OPEN ──
+  function openEntry(id) {
+    var e = entries.find(function(x){ return x.id === id; });
+    if (!e) return;
+    currentId   = id;
+    currentType = e.type;
+
+    hidePanels();
+    document.getElementById('panel-empty').style.display = 'none';
+    document.getElementById('save-bar').style.display = 'flex';
+
+    if (e.type === 'note') {
+      document.getElementById('panel-note').classList.add('visible');
+      document.getElementById('note-title').value = e.title;
+      document.getElementById('note-body').value  = e.body || '';
+    } else {
+      document.getElementById('panel-pw').classList.add('visible');
+      document.getElementById('pw-title').value = e.title;
+      document.getElementById('pw-url').value   = e.url   || '';
+      document.getElementById('pw-user').value  = e.user  || '';
+      document.getElementById('pw-pass').value  = e.pass  || '';
+      document.getElementById('pw-notes').value = e.notes || '';
+      document.getElementById('pw-pass').type   = 'password';
+      pwVisible = false;
+      updateStrength();
+    }
+    renderList();
+  }
+
+  function hidePanels() {
+    document.getElementById('panel-note').classList.remove('visible');
+    document.getElementById('panel-pw').classList.remove('visible');
+  }
+
+  // ── NEW ──
+  function showNewMenu() {
+    var type = confirm('Create a Password entry?\n\nOK = Password   Cancel = Note');
+    createNew(type ? 'pw' : 'note');
+  }
+
+  function createNew(type) {
+    var e = { id: nextId(), type: type, title: '', date: today() };
+    if (type === 'note') { e.body = ''; }
+    else { e.url = ''; e.user = ''; e.pass = ''; e.notes = ''; }
+    entries.unshift(e);
+    save();
+    renderList();
+    openEntry(e.id);
+  }
+
+  // ── SAVE ──
+  function saveEntry() {
+    var e = entries.find(function(x){ return x.id === currentId; });
+    if (!e) return;
+    if (e.type === 'note') {
+      e.title = document.getElementById('note-title').value.trim() || 'Untitled';
+      e.body  = document.getElementById('note-body').value;
+    } else {
+      e.title = document.getElementById('pw-title').value.trim() || 'Untitled';
+      e.url   = document.getElementById('pw-url').value.trim();
+      e.user  = document.getElementById('pw-user').value.trim();
+      e.pass  = document.getElementById('pw-pass').value;
+      e.notes = document.getElementById('pw-notes').value.trim();
+    }
+    e.date = today();
+    save(); renderList(); toast('Saved ✓');
+  }
+
+  function cancelEdit() {
+    currentId = null; currentType = null;
+    hidePanels();
+    document.getElementById('panel-empty').style.display = 'flex';
+    document.getElementById('save-bar').style.display = 'none';
+    renderList();
+  }
+
+  // ── DELETE ──
+  function deleteEntry() {
+    if (!currentId) return;
+    if (!confirm('Delete this entry?')) return;
+    entries = entries.filter(function(x){ return x.id !== currentId; });
+    save(); cancelEdit();
+  }
+
+  // ── PASSWORD UTILS ──
+  function togglePw() {
+    pwVisible = !pwVisible;
+    document.getElementById('pw-pass').type = pwVisible ? 'text' : 'password';
+  }
+
+  function generatePassword() {
+    var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    var pw = '';
+    for (var i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('pw-pass').value = pw;
+    document.getElementById('pw-pass').type  = 'text';
+    pwVisible = true;
+    updateStrength();
+    copyToClipboard(pw);
+    toast('Password generated & copied!');
+  }
+
+  function updateStrength() {
+    var pw  = document.getElementById('pw-pass').value;
+    var score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    var fill  = document.getElementById('strength-fill');
+    var label = document.getElementById('strength-label');
+    var levels = [
+      { w: '0%',   c: 'transparent', l: '—' },
+      { w: '25%',  c: '#f7786f',     l: 'Weak' },
+      { w: '50%',  c: '#f7c56f',     l: 'Fair' },
+      { w: '75%',  c: '#7c6ff7',     l: 'Good' },
+      { w: '100%', c: '#6ff7c4',     l: 'Strong' },
+    ];
+    var lvl = pw.length === 0 ? levels[0] : levels[Math.min(score, 4)];
+    fill.style.width      = lvl.w;
+    fill.style.background = lvl.c;
+    label.textContent     = lvl.l;
+    label.style.color     = lvl.c === 'transparent' ? 'var(--muted)' : lvl.c;
+  }
+
+  function copyField(id) {
+    var val = document.getElementById(id).value;
+    copyToClipboard(val);
+    toast('Copied to clipboard!');
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+    else {
+      var t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+    }
+  }
+
+  // ── TOAST ──
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── INIT ──
+  renderList();
+</script>
+</body>
+</html>
